@@ -12,7 +12,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else DEVICE
 class LoRA_HP_SD:
     def __init__(
         self,
-        unet_weight: str = "./weights/adapted_model.bin",
+        unet_weight: str = None,
         prompts_filepath: str = None,
         results_folder="./outputs",
         negative_prompt="Weird image.",
@@ -46,7 +46,10 @@ class LoRA_HP_SD:
         ).to(self.device)
 
         if self.unet_weight:
+            print(f"Loading LoRA unet weights from {self.unet_weight}")
             self._load_unet_weights()
+        else:
+            print("No unet weights provided, using default unet weights")
 
         if not os.path.exists(self.folder):
             os.makedirs(self.folder)
@@ -153,13 +156,14 @@ class LoRA_HP_SD:
 
             with torch.no_grad():
                 raw_images = self.pipeline(
-                    [{"text": prompt}],
+                    prompt,
                     num_inference_steps=50,
                     generator=generator,
-                    negative_prompt=[self.negative_prompt],
+                    negative_prompt=self.negative_prompt,
                 ).images
 
             for j, image in enumerate(raw_images):
+                print(f"Storing image to {image_filename}")
                 image.save(image_filename, quality=90)
                 generated_images.append(image)
 
